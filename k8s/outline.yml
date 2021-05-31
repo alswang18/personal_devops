@@ -1,0 +1,127 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: outline
+  #namespace: 
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: outline
+  template:
+    metadata:
+      #namespace: 
+      labels:
+        component: outline
+    spec:
+      containers:
+        - name: outline
+          image: outlinewiki/outline:version-0.55.0
+          command: ["/bin/sh"]
+          args:
+            [
+              "-c",
+              "yarn sequelize:migrate --env production-ssl-disabled && yarn start",
+            ]
+          ports:
+            - containerPort: 3000
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: outline
+                  key: DATABASE_URL
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: outline
+                  key: REDIS_URL
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: outline
+                  key: SECRET_KEY
+            - name: UTILS_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: outline
+                  key: UTILS_SECRET
+            - name: PORT
+              valueFrom:
+                secretKeyRef:
+                  name: outline
+                  key: PORT
+            - name: GOOGLE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: outline
+                  key: GOOGLE_CLIENT_ID
+            - name: GOOGLE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: outline
+                  key: GOOGLE_CLIENT_SECRET
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: outline
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: outline
+                  key: AWS_SECRET_ACCESS_KEY
+            - name: AWS_S3_UPLOAD_BUCKET_URL
+              value: #https://bucketname.s3-ap-southeast-1.amazonaws.com/
+            - name: AWS_S3_UPLOAD_BUCKET_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: outline
+                  key: AWS_S3_UPLOAD_BUCKET_NAME
+            - name: AWS_S3_UPLOAD_MAX_SIZE
+              value: "26214400"
+            - name: AWS_S3_FORCE_PATH_STYLE
+              value: "false"
+            - name: AWS_REGION
+              value: ap-southeast-1
+            - name: PGSSLMODE
+              value: "disable"
+            - name: DEFAULT_LANGUAGE
+              value: "en_US"
+            - name: URL
+              value: "" #https://outline.domain.com
+            - name: HOST
+              value: "" #outline.domain.com
+            - name: DEBUG
+              value: "cache,presenters,events,emails,mailer,utils,multiplayer,server,services"
+            - name: SMTP_HOST
+              value: "" #email-smtp.ap-southeast-2.amazonaws.com
+            - name: SMTP_PORT
+              value: "25"
+            - name: SMTP_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: outline
+                  key: SMTP_USERNAME
+            - name: SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: outline
+                  key: SMTP_PASSWORD
+            - name: SMTP_FROM_EMAIL
+              value: #no-reply@mail.domain.com
+            - name: SMTP_REPLY_EMAIL
+              value: #no-reply@mail.domain.com
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: outline-service
+  namespace: production
+spec:
+  type: ClusterIP
+  selector:
+    component: outline
+  ports:
+    - port: 80
+      targetPort: 3000
